@@ -4,10 +4,27 @@ import (
 	"log"
 	"net"
 
-	"github.com/JackPairce/MicroService/services/chat"
+	"github.com/JackPairce/MicroService/services/superpeer"
 	"google.golang.org/grpc"
 )
 
+// func main() {
+// 	port := "8080"
+// 	lis, err := net.Listen("tcp", ":"+port)
+// 	if err != nil {
+// 		log.Fatalf("failed to listen: %v", err)
+// 	}
+// 	log.Printf("Listening on port %s", port)
+
+// 	s := chat.Server{}
+// 	grpcServer := grpc.NewServer()
+// 	chat.RegisterChatServiceServer(grpcServer, &s)
+
+// 	if err := grpcServer.Serve(lis); err != nil {
+// 		log.Fatalf("failed to serve: %v", err)
+// 	}
+
+// }
 func main() {
 	port := "8080"
 	lis, err := net.Listen("tcp", ":"+port)
@@ -16,12 +33,11 @@ func main() {
 	}
 	log.Printf("Listening on port %s", port)
 
-	s := chat.Server{}
+	s := superpeer.Server{}
 	grpcServer := grpc.NewServer()
-	chat.RegisterChatServiceServer(grpcServer, &s)
+	superpeer.RegisterSuperPeerServer(grpcServer, &s)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-
 }

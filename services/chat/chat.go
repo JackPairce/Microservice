@@ -1,7 +1,10 @@
 package chat
 
 import (
+	"bufio"
 	"log"
+	"os"
+	"strings"
 
 	"golang.org/x/net/context"
 )
@@ -15,6 +18,9 @@ func (s *Server) mustEmbedUnimplementedChatServiceServer() {
 }
 
 func (s *Server) SendMessage(ctx context.Context, in *Message) (*Message, error) {
-	log.Printf("Received message body from client: %s", in.Body)
-	return &Message{Body: "Hello From the Server!"}, nil
+	log.Printf("Client: %s", in.Body)
+	reader := bufio.NewReader(os.Stdin)
+	text, _ := reader.ReadString('\n')
+	text = strings.Replace(text, "\n", "", -1)
+	return &Message{Body: text}, nil
 }

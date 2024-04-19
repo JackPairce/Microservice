@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option go_package = "/superpeer";
+
+message File {
+    string name = 1;
+    int32 size = 2;
+}
+
+message FileData {
+    File file = 1;
+    bytes data = 2;
+}
+
+message FileList {
+    repeated File files = 1;
+}
+
+message RegisterRequest {
+    string name = 1;
+    string address = 2;
+    string password = 3;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    int32 id = 2;
+}
+
+message SearchFilesRequest {
+    string query = 1;
+    int32 page = 2;
+}
+
+message SearchFilesResponse {
+    FileList results = 1;
+    int32 total_pages = 2;
+    int32 current_page = 3;
+}
+
+message Empty {}
+
+service SuperPeer {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Login(RegisterRequest) returns (RegisterResponse) {}
+  rpc SearchFiles(SearchFilesRequest) returns (SearchFilesResponse) {}
+  rpc GetPeerFiles(FileList) returns (Empty) {}
+}
