@@ -55,11 +55,25 @@ func (s *Server) Login(ctx context.Context, in *RegisterRequest) (*RegisterRespo
 
 func (s *Server) SearchFiles(ctx context.Context, in *SearchFilesRequest) (*SearchFilesResponse, error) {
 	// Validate input parameters
-	if in.Query == "" {
-		return &SearchFilesResponse{},
-			nil
+	if in.Filename == "" {
+		return &SearchFilesResponse{
+			Results: &FileList{
+				Files: []*File{
+					{
+						Name: "example.txt",
+						Size: 1024,
+					},
+					{
+						Name: "example2.txt",
+						Size: 2048,
+					},
+				},
+			},
+		}, nil
 	}
-	return &SearchFilesResponse{}, nil
+	return &SearchFilesResponse{
+		Results: &FileList{},
+	}, nil
 }
 
 func (s *Server) GetPeerFiles(ctx context.Context, in *FileList) (*Empty, error) {

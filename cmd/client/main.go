@@ -47,14 +47,7 @@ func main() {
 	default:
 		fmt.Println("Invalid option")
 	}
-
-	// if strings.Compare(text, "exit") == 0 {
-	// 	break
-	// }
-	// Contact the server and print out its response.
-	// message := chat.Message{Body: text}
-	// response, err := c.SendMessage(context.Background(), &message)
-
+	SearchFiles(c, "e")
 }
 
 func InputReader(r *bufio.Reader) (string, error) {

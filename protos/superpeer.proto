@@ -28,14 +28,12 @@ message RegisterResponse {
 }
 
 message SearchFilesRequest {
-    string query = 1;
-    int32 page = 2;
+    int32 id = 1;
+    string filename = 2;
 }
 
 message SearchFilesResponse {
     FileList results = 1;
-    int32 total_pages = 2;
-    int32 current_page = 3;
 }
 
 message Empty {}

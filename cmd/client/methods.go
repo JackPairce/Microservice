@@ -39,3 +39,24 @@ func Login(c superpeer.SuperPeerClient, Name string, password string) {
 		}
 	}
 }
+
+func SearchFiles(c superpeer.SuperPeerClient, searchTerm string) {
+	res, err := c.SearchFiles(context.Background(), &superpeer.SearchFilesRequest{
+		Id:       0,
+		Filename: searchTerm,
+	})
+
+	if err != nil {
+		fmt.Println("Error searching files:", err)
+		return
+	}
+
+	if len(res.Results.Files) == 0 {
+		fmt.Println("No files found matching the search term.")
+	} else {
+		fmt.Println("Search results:")
+		for _, file := range res.Results.Files {
+			fmt.Println("- ", file.Name)
+		}
+	}
+}
