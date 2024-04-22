@@ -7,6 +7,7 @@
 package superpeer
 
 import (
+	types "github.com/JackPairce/MicroService/services/types"
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -19,10 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SuperPeer_Register_FullMethodName     = "/SuperPeer/Register"
-	SuperPeer_Login_FullMethodName        = "/SuperPeer/Login"
-	SuperPeer_SearchFiles_FullMethodName  = "/SuperPeer/SearchFiles"
-	SuperPeer_GetPeerFiles_FullMethodName = "/SuperPeer/GetPeerFiles"
+	SuperPeer_Register_FullMethodName     = "/protos.SuperPeer/Register"
+	SuperPeer_Login_FullMethodName        = "/protos.SuperPeer/Login"
+	SuperPeer_SearchFiles_FullMethodName  = "/protos.SuperPeer/SearchFiles"
+	SuperPeer_GetPeerFiles_FullMethodName = "/protos.SuperPeer/GetPeerFiles"
 )
 
 // SuperPeerClient is the client API for SuperPeer service.
@@ -32,7 +33,7 @@ type SuperPeerClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	SearchFiles(ctx context.Context, in *SearchFilesRequest, opts ...grpc.CallOption) (*SearchFilesResponse, error)
-	GetPeerFiles(ctx context.Context, in *FileList, opts ...grpc.CallOption) (*Empty, error)
+	GetPeerFiles(ctx context.Context, in *types.FileList, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type superPeerClient struct {
@@ -70,7 +71,7 @@ func (c *superPeerClient) SearchFiles(ctx context.Context, in *SearchFilesReques
 	return out, nil
 }
 
-func (c *superPeerClient) GetPeerFiles(ctx context.Context, in *FileList, opts ...grpc.CallOption) (*Empty, error) {
+func (c *superPeerClient) GetPeerFiles(ctx context.Context, in *types.FileList, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, SuperPeer_GetPeerFiles_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -86,7 +87,7 @@ type SuperPeerServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	SearchFiles(context.Context, *SearchFilesRequest) (*SearchFilesResponse, error)
-	GetPeerFiles(context.Context, *FileList) (*Empty, error)
+	GetPeerFiles(context.Context, *types.FileList) (*Empty, error)
 	mustEmbedUnimplementedSuperPeerServer()
 }
 
@@ -103,7 +104,7 @@ func (UnimplementedSuperPeerServer) Login(context.Context, *RegisterRequest) (*R
 func (UnimplementedSuperPeerServer) SearchFiles(context.Context, *SearchFilesRequest) (*SearchFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchFiles not implemented")
 }
-func (UnimplementedSuperPeerServer) GetPeerFiles(context.Context, *FileList) (*Empty, error) {
+func (UnimplementedSuperPeerServer) GetPeerFiles(context.Context, *types.FileList) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPeerFiles not implemented")
 }
 func (UnimplementedSuperPeerServer) mustEmbedUnimplementedSuperPeerServer() {}
@@ -174,7 +175,7 @@ func _SuperPeer_SearchFiles_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _SuperPeer_GetPeerFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FileList)
+	in := new(types.FileList)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -186,7 +187,7 @@ func _SuperPeer_GetPeerFiles_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: SuperPeer_GetPeerFiles_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SuperPeerServer).GetPeerFiles(ctx, req.(*FileList))
+		return srv.(SuperPeerServer).GetPeerFiles(ctx, req.(*types.FileList))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -195,7 +196,7 @@ func _SuperPeer_GetPeerFiles_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SuperPeer_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "SuperPeer",
+	ServiceName: "protos.SuperPeer",
 	HandlerType: (*SuperPeerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

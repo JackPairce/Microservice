@@ -37,17 +37,36 @@ func main() {
 
 	fmt.Print("Enter your Name: ")
 	Name, _ := InputReader(reader)
-	fmt.Print("Enter your Name: ")
+	fmt.Print("Enter your PassWord: ")
 	password, _ := InputReader(reader)
+	nd := NodeInfo{
+		ctx:  c,
+		Name: Name,
+		Pass: password,
+	}
 	switch option {
 	case "1":
-		Register(c, Name, password)
+		nd.Register()
 	case "2":
-		Login(c, Name, password)
+		nd.Login()
 	default:
 		fmt.Println("Invalid option")
 	}
-	SearchFiles(c, "e")
+	nd.ExposeFiles()
+
+	for {
+		fmt.Print("Enter File Name To find: ")
+		FileToSearch, err := InputReader(reader)
+		if err != nil {
+			log.Fatalln(err)
+			return
+		}
+		if FileToSearch == "/exit" {
+			break
+		}
+		nd.SearchFiles(FileToSearch)
+
+	}
 }
 
 func InputReader(r *bufio.Reader) (string, error) {

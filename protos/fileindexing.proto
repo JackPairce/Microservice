@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package protos;
+
+option go_package = "/fileindexing";
+
+import "protos/types.proto";
+
+message KeyValue {
+    string key = 1;
+    repeated File values = 2;
+}
+
+message JSONData {
+    repeated KeyValue data = 1;
+}

@@ -3,36 +3,49 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
-	"github.com/JackPairce/MicroService/services/superpeer"
+	s "github.com/JackPairce/MicroService/services/superpeer"
+	t "github.com/JackPairce/MicroService/services/types"
 )
 
-func Register(c superpeer.SuperPeerClient, Name string, password string) {
+type NodeInfo struct {
+	Name string
+	Pass string
+	Id   int32
+	ctx  s.SuperPeerClient
+}
+
+func (nd *NodeInfo) Register() {
 	for {
-		res, err := c.Register(context.Background(), &superpeer.RegisterRequest{
-			Name:     Name,
-			Password: password,
+		res, err := nd.ctx.Register(context.Background(), &s.RegisterRequest{
+			Name:     nd.Name,
+			Password: nd.Pass,
 			Address:  GetLocalIP(),
 		})
 
 		if res.Success {
-			fmt.Println("Registration successful!")
+			fmt.Println("Registration successful! with id: ", res.Id)
+			nd.Id = res.Id
+
 			break
 		} else {
 			fmt.Println("Registration failed:", err)
 		}
 	}
 }
-func Login(c superpeer.SuperPeerClient, Name string, password string) {
+func (nd *NodeInfo) Login() {
 	for {
-		res, err := c.Login(context.Background(), &superpeer.RegisterRequest{
-			Name:     Name,
-			Password: password,
+		res, err := nd.ctx.Login(context.Background(), &s.RegisterRequest{
+			Name:     nd.Name,
+			Password: nd.Pass,
 			Address:  GetLocalIP(),
 		})
 
 		if res.Success {
 			fmt.Println("Login successful!")
+			nd.Id = res.Id
 			break
 		} else {
 			fmt.Println("Login failed:", err)
@@ -40,9 +53,9 @@ func Login(c superpeer.SuperPeerClient, Name string, password string) {
 	}
 }
 
-func SearchFiles(c superpeer.SuperPeerClient, searchTerm string) {
-	res, err := c.SearchFiles(context.Background(), &superpeer.SearchFilesRequest{
-		Id:       0,
+func (nd *NodeInfo) SearchFiles(searchTerm string) {
+	res, err := nd.ctx.SearchFiles(context.Background(), &s.SearchFilesRequest{
+		Id:       nd.Id,
 		Filename: searchTerm,
 	})
 
@@ -59,4 +72,30 @@ func SearchFiles(c superpeer.SuperPeerClient, searchTerm string) {
 			fmt.Println("- ", file.Name)
 		}
 	}
+}
+
+func (nd *NodeInfo) ExposeFiles() error {
+	var files []*t.File
+	dirPath := "/home/jackpairce/Documents/" + nd.Name
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		OwnerID := make([]int32, 0)
+		if !info.IsDir() {
+			FILE := &t.File{
+				Name:    info.Name(),
+				Size:    int32(info.Size()),
+				Ownerid: append(OwnerID, nd.Id),
+				Path:    "/",
+			}
+			files = append(files, FILE)
+		}
+		return nil
+	})
+	nd.ctx.GetPeerFiles(context.Background(), &t.FileList{
+		Files: files,
+	})
+	return err
+
 }

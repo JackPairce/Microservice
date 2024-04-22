@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "/types";
+
+message File {
+    string name = 1;
+    int32 size = 2;
+    repeated int32 ownerid = 3;
+    string path = 4;
+}
+
+message FileData {
+    File file = 1;
+    bytes data = 2;
+}
+
+message FileList {
+    repeated File files = 1;
+}
