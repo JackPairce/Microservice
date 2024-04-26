@@ -7,7 +7,6 @@ import (
 	"github.com/JackPairce/MicroService/services/fileindexing"
 	"github.com/JackPairce/MicroService/services/superpeer"
 
-	// "github.com/JackPairce/MicroService/services/types"
 	"google.golang.org/grpc"
 )
 

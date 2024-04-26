@@ -20,10 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SuperPeer_Register_FullMethodName     = "/protos.SuperPeer/Register"
-	SuperPeer_Login_FullMethodName        = "/protos.SuperPeer/Login"
-	SuperPeer_SearchFiles_FullMethodName  = "/protos.SuperPeer/SearchFiles"
-	SuperPeer_GetPeerFiles_FullMethodName = "/protos.SuperPeer/GetPeerFiles"
+	SuperPeer_Register_FullMethodName         = "/protos.SuperPeer/Register"
+	SuperPeer_Login_FullMethodName            = "/protos.SuperPeer/Login"
+	SuperPeer_SearchFiles_FullMethodName      = "/protos.SuperPeer/SearchFiles"
+	SuperPeer_GetPeerFiles_FullMethodName     = "/protos.SuperPeer/GetPeerFiles"
+	SuperPeer_GetPeerConnexion_FullMethodName = "/protos.SuperPeer/GetPeerConnexion"
 )
 
 // SuperPeerClient is the client API for SuperPeer service.
@@ -34,6 +35,7 @@ type SuperPeerClient interface {
 	Login(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	SearchFiles(ctx context.Context, in *SearchFilesRequest, opts ...grpc.CallOption) (*SearchFilesResponse, error)
 	GetPeerFiles(ctx context.Context, in *types.FileList, opts ...grpc.CallOption) (*Empty, error)
+	GetPeerConnexion(ctx context.Context, in *PeerId, opts ...grpc.CallOption) (*PeerConnexion, error)
 }
 
 type superPeerClient struct {
@@ -80,6 +82,15 @@ func (c *superPeerClient) GetPeerFiles(ctx context.Context, in *types.FileList, 
 	return out, nil
 }
 
+func (c *superPeerClient) GetPeerConnexion(ctx context.Context, in *PeerId, opts ...grpc.CallOption) (*PeerConnexion, error) {
+	out := new(PeerConnexion)
+	err := c.cc.Invoke(ctx, SuperPeer_GetPeerConnexion_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SuperPeerServer is the server API for SuperPeer service.
 // All implementations must embed UnimplementedSuperPeerServer
 // for forward compatibility
@@ -88,6 +99,7 @@ type SuperPeerServer interface {
 	Login(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	SearchFiles(context.Context, *SearchFilesRequest) (*SearchFilesResponse, error)
 	GetPeerFiles(context.Context, *types.FileList) (*Empty, error)
+	GetPeerConnexion(context.Context, *PeerId) (*PeerConnexion, error)
 	mustEmbedUnimplementedSuperPeerServer()
 }
 
@@ -106,6 +118,9 @@ func (UnimplementedSuperPeerServer) SearchFiles(context.Context, *SearchFilesReq
 }
 func (UnimplementedSuperPeerServer) GetPeerFiles(context.Context, *types.FileList) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPeerFiles not implemented")
+}
+func (UnimplementedSuperPeerServer) GetPeerConnexion(context.Context, *PeerId) (*PeerConnexion, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPeerConnexion not implemented")
 }
 func (UnimplementedSuperPeerServer) mustEmbedUnimplementedSuperPeerServer() {}
 
@@ -192,6 +207,24 @@ func _SuperPeer_GetPeerFiles_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SuperPeer_GetPeerConnexion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperPeerServer).GetPeerConnexion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperPeer_GetPeerConnexion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperPeerServer).GetPeerConnexion(ctx, req.(*PeerId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SuperPeer_ServiceDesc is the grpc.ServiceDesc for SuperPeer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -214,6 +247,10 @@ var SuperPeer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPeerFiles",
 			Handler:    _SuperPeer_GetPeerFiles_Handler,
+		},
+		{
+			MethodName: "GetPeerConnexion",
+			Handler:    _SuperPeer_GetPeerConnexion_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

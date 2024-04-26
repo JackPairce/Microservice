@@ -7,6 +7,7 @@
 package peer
 
 import (
+	types "github.com/JackPairce/MicroService/services/types"
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -19,14 +20,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Peer_SendFile_FullMethodName = "/Peer/SendFile"
+	Peer_SendFile_FullMethodName = "/protos.Peer/SendFile"
 )
 
 // PeerClient is the client API for Peer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PeerClient interface {
-	SendFile(ctx context.Context, in *FileData, opts ...grpc.CallOption) (*Empty, error)
+	SendFile(ctx context.Context, in *types.File, opts ...grpc.CallOption) (Peer_SendFileClient, error)
 }
 
 type peerClient struct {
@@ -37,20 +38,43 @@ func NewPeerClient(cc grpc.ClientConnInterface) PeerClient {
 	return &peerClient{cc}
 }
 
-func (c *peerClient) SendFile(ctx context.Context, in *FileData, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, Peer_SendFile_FullMethodName, in, out, opts...)
+func (c *peerClient) SendFile(ctx context.Context, in *types.File, opts ...grpc.CallOption) (Peer_SendFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Peer_ServiceDesc.Streams[0], Peer_SendFile_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &peerSendFileClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Peer_SendFileClient interface {
+	Recv() (*types.FileData, error)
+	grpc.ClientStream
+}
+
+type peerSendFileClient struct {
+	grpc.ClientStream
+}
+
+func (x *peerSendFileClient) Recv() (*types.FileData, error) {
+	m := new(types.FileData)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // PeerServer is the server API for Peer service.
 // All implementations must embed UnimplementedPeerServer
 // for forward compatibility
 type PeerServer interface {
-	SendFile(context.Context, *FileData) (*Empty, error)
+	SendFile(*types.File, Peer_SendFileServer) error
 	mustEmbedUnimplementedPeerServer()
 }
 
@@ -58,8 +82,8 @@ type PeerServer interface {
 type UnimplementedPeerServer struct {
 }
 
-func (UnimplementedPeerServer) SendFile(context.Context, *FileData) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendFile not implemented")
+func (UnimplementedPeerServer) SendFile(*types.File, Peer_SendFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendFile not implemented")
 }
 func (UnimplementedPeerServer) mustEmbedUnimplementedPeerServer() {}
 
@@ -74,36 +98,40 @@ func RegisterPeerServer(s grpc.ServiceRegistrar, srv PeerServer) {
 	s.RegisterService(&Peer_ServiceDesc, srv)
 }
 
-func _Peer_SendFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FileData)
-	if err := dec(in); err != nil {
-		return nil, err
+func _Peer_SendFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(types.File)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(PeerServer).SendFile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Peer_SendFile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PeerServer).SendFile(ctx, req.(*FileData))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(PeerServer).SendFile(m, &peerSendFileServer{stream})
+}
+
+type Peer_SendFileServer interface {
+	Send(*types.FileData) error
+	grpc.ServerStream
+}
+
+type peerSendFileServer struct {
+	grpc.ServerStream
+}
+
+func (x *peerSendFileServer) Send(m *types.FileData) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // Peer_ServiceDesc is the grpc.ServiceDesc for Peer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Peer_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Peer",
+	ServiceName: "protos.Peer",
 	HandlerType: (*PeerServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "SendFile",
-			Handler:    _Peer_SendFile_Handler,
+			StreamName:    "SendFile",
+			Handler:       _Peer_SendFile_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "peer.proto",
 }

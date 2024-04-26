@@ -8,6 +8,10 @@ import "protos/types.proto";
 
 message User {
     int32 id = 1;
+    string address = 2;
+    string port = 3;
+    string name =4;
+    string password = 5;
 }
 
 message Users {
@@ -16,8 +20,9 @@ message Users {
 
 message RegisterRequest {
     string name = 1;
-    string address = 2;
-    string password = 3;
+    string password = 2;
+    string address = 3;
+    string port =4;
 }
 
 message RegisterResponse {
@@ -36,9 +41,19 @@ message SearchFilesResponse {
 
 message Empty {}
 
+message PeerId {
+    int32 id = 1;
+}
+
+message PeerConnexion {
+    string address = 1;
+    string port = 2;
+}
+
 service SuperPeer {
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
   rpc Login(RegisterRequest) returns (RegisterResponse) {}
   rpc SearchFiles(SearchFilesRequest) returns (SearchFilesResponse) {}
   rpc GetPeerFiles(FileList) returns (Empty) {}
+    rpc GetPeerConnexion(PeerId) returns (PeerConnexion) {}
 }

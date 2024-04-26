@@ -2,10 +2,11 @@ package fileindexing
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
-	"slices"
 
 	t "github.com/JackPairce/MicroService/services/types"
+	"github.com/ahmetb/go-linq"
 )
 
 type FileIndexing map[string][]*t.File
@@ -53,10 +54,12 @@ func generateKeys(input string) []string {
 
 	var generate func(prefix, remaining string)
 	generate = func(prefix, remaining string) {
+		if prefix != "" {
+			keys = append(keys, prefix)
+		}
 		if len(remaining) == 0 {
 			return
 		}
-		keys = append(keys, prefix)
 		for i := 0; i < len(remaining); i++ {
 			generate(prefix+string(remaining[i]), remaining[i+1:])
 		}
@@ -64,24 +67,13 @@ func generateKeys(input string) []string {
 
 	// generate("", strings.Split(input, ".")[0])
 	generate("", input)
-
 	return keys
 }
 
-func (idx FileIndexing) GetUniqueFileNames(id int32) []*t.File {
-	var uniqueFiles []*t.File
-	seen := make(map[string]bool)
-
-	for _, files := range idx {
-		for _, file := range files {
-			if !slices.Contains(file.Ownerid, id) && !seen[file.Name] {
-				seen[file.Name] = true
-				uniqueFiles = append(uniqueFiles, file)
-			}
-		}
-	}
-
-	return uniqueFiles
+func (idx FileIndexing) GetUniqueFileNames(id int32) *[]t.File {
+	var ReturnData []t.File
+	linq.From(idx).Distinct().Take(10).ToSlice(&ReturnData)
+	return &ReturnData
 }
 
 func (idx FileIndexing) AddFile(f *t.File) {
@@ -94,6 +86,7 @@ func (idx FileIndexing) AddFile(f *t.File) {
 }
 
 func (idx FileIndexing) SearchFiles(queryPrefix string) []*t.File {
+	fmt.Println()
 	return idx[queryPrefix]
 }
 

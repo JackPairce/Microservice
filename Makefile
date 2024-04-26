@@ -1,7 +1,15 @@
+build-output:
+	@mkdir -p bin/
 
-serve: cmd/server/main.go
-	@go run cmd/server/main.go
+build-server: cmd/server/main.go build-output
+	@cd cmd/server/ && go build -o ../../bin/server
 
-cli: cmd/client/main.go
-	@go run cmd/client/*.go
+build-client: cmd/client/main.go build-output
+	@cd cmd/client/ && go build -o ../../bin/client
+
+serve: build-server
+	@./bin/server
+
+cli: build-client
+	@./bin/client
 

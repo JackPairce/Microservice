@@ -9,6 +9,7 @@ import (
 
 	f "github.com/JackPairce/MicroService/services/fileindexing"
 	t "github.com/JackPairce/MicroService/services/types"
+	"github.com/ahmetb/go-linq"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 )
@@ -20,7 +21,7 @@ type Server struct {
 
 func (s *Server) Register(ctx context.Context, in *RegisterRequest) (*RegisterResponse, error) {
 	// Validate input parameters
-	if in.Name == "" || in.Address == "" || in.Password == "" {
+	if in.Port == "" || in.Address == "" || in.Name == "" || in.Password == "" {
 		return &RegisterResponse{
 				Success: false,
 				Id:      int32(math.NaN()),
@@ -37,7 +38,7 @@ func (s *Server) Register(ctx context.Context, in *RegisterRequest) (*RegisterRe
 	}
 	log.Printf("%s with %s is Registred", in.Name, in.Address)
 	ID := int32(rand.IntN(999999))
-	*s.Users = append(*s.Users, User{Id: ID})
+	*s.Users = append(*s.Users, User{Id: ID, Address: in.Address, Name: in.Name, Password: in.Password, Port: in.Port})
 	println("reg", s.Users)
 	return &RegisterResponse{
 		Success: true,
@@ -63,20 +64,19 @@ func (s *Server) Login(ctx context.Context, in *RegisterRequest) (*RegisterRespo
 
 func (s *Server) SearchFiles(ctx context.Context, in *SearchFilesRequest) (*SearchFilesResponse, error) {
 	// Validate input parameters
-	if in.Filename == "" {
-		return &SearchFilesResponse{
-			Results: &t.FileList{Files: s.Indexer.GetUniqueFileNames(in.Id)},
-		}, nil
-	}
+	// var Results []*t.File
+	// Results = s.Indexer.SearchFiles(in.Filename)
+	//  else {
+	// }
 	// filter the search results to not include files that are already owned by the requesting user
-	var filteredFiles []*t.File
-	for _, file := range s.Indexer.SearchFiles(in.Filename) {
-		if !slices.Contains(file.Ownerid, in.Id) {
-			filteredFiles = append(filteredFiles, file)
-		}
-	}
+	// var filteredFiles []*t.File
+	// for _, file := range s.Indexer.SearchFiles(in.Filename) {
+	// 	if !slices.Contains(file.Ownerid, in.Id) {
+	// 		filteredFiles = append(filteredFiles, file)
+	// 	}
+	// }
 	return &SearchFilesResponse{
-		Results: &t.FileList{Files: filteredFiles},
+		Results: &t.FileList{Files: s.Indexer.SearchFiles(in.Filename)},
 	}, nil
 }
 
@@ -95,10 +95,23 @@ func (s *Server) GetPeerFiles(ctx context.Context, in *t.FileList) (*Empty, erro
 		} else if len(FILES) == 1 && !slices.Contains(FILES[0].Ownerid, file.Ownerid[0]) {
 			s.Indexer.UpdateFile(file)
 		} else {
-			log.Fatalln("Too many files with the same name found. This should not happen.")
+			return &Empty{}, status.Error(codes.OutOfRange, "Too many files with the same name found. This should not happen.")
 		}
 	}
 	return &Empty{}, nil
+}
+
+func (s *Server) GetPeerConnexion(ctx context.Context, in *PeerId) (*PeerConnexion, error) {
+	user := linq.From(*s.Users).FirstWith(func(u interface{}) bool {
+		return u.(User).Id == in.Id
+	})
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "User with ID %d not found", in.Id)
+	}
+	return &PeerConnexion{
+		Address: user.(User).Address,
+		Port:    user.(User).Port,
+	}, nil
 }
 
 func (s *Server) mustEmbedUnimplementedSuperPeerServer() {}

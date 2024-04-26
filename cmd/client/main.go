@@ -4,25 +4,34 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strings"
 
 	"google.golang.org/grpc"
 
 	"github.com/JackPairce/MicroService/services/superpeer"
+	t "github.com/JackPairce/MicroService/services/types"
+)
+
+const (
+	port    = "8080"
+	address = "localhost"
 )
 
 func main() {
-	port := "8080"
-	address := "localhost"
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address+":"+port, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
+		return
 	}
 	defer conn.Close()
 	c := superpeer.NewSuperPeerClient(conn)
+	var MyPort string
+	MyPort, err = GetRandomPort()
+	if err != nil {
+		log.Fatalln(err)
+	}
 	reader := bufio.NewReader(os.Stdin)
 	option := "0"
 	for {
@@ -40,10 +49,15 @@ func main() {
 	fmt.Print("Enter your PassWord: ")
 	password, _ := InputReader(reader)
 	nd := NodeInfo{
-		ctx:  c,
-		Name: Name,
-		Pass: password,
+		ctx:           c,
+		Name:          Name,
+		Pass:          password,
+		SearchedFiles: []*t.File{},
+		MyServerPort:  MyPort,
+		localpath:     "/home/jackpairce/Documents/",
 	}
+	go nd.StartPeerServer(MyPort)
+
 	switch option {
 	case "1":
 		nd.Register()
@@ -55,40 +69,32 @@ func main() {
 	nd.ExposeFiles()
 
 	for {
-		fmt.Print("Enter File Name To find: ")
-		FileToSearch, err := InputReader(reader)
+		fmt.Print("Enter Command (/find,/get,/exit)\n> ")
+		Command, err := InputReader(reader)
 		if err != nil {
 			log.Fatalln(err)
 			return
 		}
-		if FileToSearch == "/exit" {
-			break
+		if Command == "" {
+			continue
 		}
-		nd.SearchFiles(FileToSearch)
-
-	}
-}
-
-func InputReader(r *bufio.Reader) (string, error) {
-	text, err := r.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	return strings.Replace(text, "\n", "", -1), nil
-}
-
-func GetLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		// check the address type and if it is not a loopback the display it
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
+		xComand := strings.Split(Command, " ")
+		if len(xComand) < 2 {
+			fmt.Println("Invalid Command")
+			continue
+		}
+		C := xComand[0]
+		arg := xComand[1]
+		switch C {
+		case "":
+		case "/find":
+			nd.SearchFiles(arg)
+		case "/get":
+			nd.GetFile(arg)
+		case "/exit":
+			return
+		default:
+			fmt.Println("Command Not reconized of (/find,/get,/exit)")
 		}
 	}
-	return ""
 }

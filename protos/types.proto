@@ -10,8 +10,7 @@ message File {
 }
 
 message FileData {
-    File file = 1;
-    bytes data = 2;
+    bytes data = 1;
 }
 
 message FileList {
