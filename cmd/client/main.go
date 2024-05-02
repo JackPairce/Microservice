@@ -2,12 +2,17 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"path"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/JackPairce/MicroService/services/superpeer"
 	t "github.com/JackPairce/MicroService/services/types"
@@ -18,55 +23,93 @@ const (
 	address = "localhost"
 )
 
+var (
+	MyID int64
+)
+
 func main() {
-	// Set up a connection to the server.
-	conn, err := grpc.Dial(address+":"+port, grpc.WithInsecure())
+	conn, err := grpc.Dial(address+":"+port,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(
+			func(ctx context.Context,
+				method string,
+				req,
+				reply interface{},
+				cc *grpc.ClientConn,
+				invoker grpc.UnaryInvoker,
+				opts ...grpc.CallOption,
+			) error {
+				md, ok := metadata.FromOutgoingContext(ctx)
+				if ok {
+					log.Println("-->out md interceptor: ", md)
+				}
+				return invoker(ctx, method, req, reply, cc, opts...)
+			}),
+	)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 		return
 	}
 	defer conn.Close()
+
 	c := superpeer.NewSuperPeerClient(conn)
+
 	var MyPort string
 	MyPort, err = GetRandomPort()
 	if err != nil {
 		log.Fatalln(err)
 	}
 	reader := bufio.NewReader(os.Stdin)
-	option := "0"
-	for {
-		fmt.Print("chose option:\n1. Register\n2. Login\n->")
-		option, _ = InputReader(reader)
-		if option == "1" || option == "2" {
-			break
-		} else {
-			fmt.Println("Invalid option")
-		}
-	}
 
-	fmt.Print("Enter your Name: ")
-	Name, _ := InputReader(reader)
-	fmt.Print("Enter your PassWord: ")
-	password, _ := InputReader(reader)
 	nd := NodeInfo{
 		ctx:           c,
-		Name:          Name,
-		Pass:          password,
 		SearchedFiles: []*t.File{},
 		MyServerPort:  MyPort,
-		localpath:     "/home/jackpairce/Documents/",
+	}
+
+Choose:
+	for {
+		fmt.Print("chose option:\n1. Register\n2. Login\n->")
+		option, _ := InputReader(reader)
+		if option != "1" && option != "2" {
+			fmt.Println("Invalid option")
+			continue
+		}
+
+		fmt.Print("Enter your Name: ")
+		Name, _ := InputReader(reader)
+		fmt.Print("Enter your PassWord: ")
+		password, _ := InputReader(reader)
+
+		nd.Name = Name
+		nd.Pass = password
+		switch option {
+		case "1":
+			if nd.Register() {
+				break Choose
+			}
+		case "2":
+			if nd.Login() {
+				break Choose
+			}
+		}
 	}
 	go nd.StartPeerServer(MyPort)
 
-	switch option {
-	case "1":
-		nd.Register()
-	case "2":
-		nd.Login()
-	default:
-		fmt.Println("Invalid option")
+	// TODO: Add a notifier to add path
+	// TODO: Add a watch on the path for changes
+
+	nd.localpath = path.Join("/home/jackpairce/Documents/", nd.Name)
+	fmt.Println("Exposing Files from:", nd.localpath)
+	if err := os.Mkdir(nd.localpath, 0755); err != nil {
+		if !os.IsExist(err) {
+			log.Fatalln(err)
+		}
 	}
-	nd.ExposeFiles()
+
+	if err := nd.ExposeFiles(); err != nil {
+		log.Fatalln(err)
+	}
 
 	for {
 		fmt.Print("Enter Command (/find,/get,/exit)\n> ")
@@ -79,6 +122,9 @@ func main() {
 			continue
 		}
 		xComand := strings.Split(Command, " ")
+		if xComand[0] == "/exit" {
+			return
+		}
 		if len(xComand) < 2 {
 			fmt.Println("Invalid Command")
 			continue
@@ -88,13 +134,28 @@ func main() {
 		switch C {
 		case "":
 		case "/find":
-			nd.SearchFiles(arg)
+			if nd.SearchFiles(arg) {
+				nd.StopPeerClient()
+				goto Choose
+			}
 		case "/get":
-			nd.GetFile(arg)
-		case "/exit":
-			return
+			if nd.GetFile(arg) {
+				nd.StopPeerClient()
+				goto Choose
+			}
 		default:
 			fmt.Println("Command Not reconized of (/find,/get,/exit)")
 		}
 	}
+}
+
+// Unary client interceptor to add custom headers to outgoing requests
+func UnaryClientInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+
+	// Add custom headers to outgoing requests
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("id", strconv.Itoa(int(123))))
+	// Call the RPC invoker
+	err := invoker(ctx, method, req, reply, cc, opts...)
+
+	return err
 }
