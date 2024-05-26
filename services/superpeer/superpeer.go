@@ -21,6 +21,10 @@ type Server struct {
 	ActivePeers *map[string]int64
 }
 
+func (s *Server) Ping(ctx context.Context, in *Empty) (*Empty, error) {
+	return &Empty{}, nil
+}
+
 func (s *Server) UserConnection(ctx context.Context, in *RegisterRequest, IsRegister bool) (*RegisterResponse, error) {
 	// Validate the fields
 	if in.Peeeraddress == "" || in.Name == "" || in.Password == "" {

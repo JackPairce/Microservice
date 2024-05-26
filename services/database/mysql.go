@@ -36,6 +36,7 @@ func (s *DB) Connect() error {
 	if pingErr != nil {
 		return pingErr
 	}
+	log.Println("Connected to database.")
 	s.DB = DB
 	return nil
 }
@@ -83,7 +84,7 @@ func (s *DB) AddUser(user *t.User) (int64, error) {
 		return int64(math.NaN()), err
 	}
 	defer stmt.Close()
-	HashedPass, err := hashing.HashPassword(user.Name)
+	HashedPass, err := hashing.HashPassword(user.Password)
 	if err != nil {
 		return int64(math.NaN()), err
 	}
@@ -158,7 +159,7 @@ func (s *DB) AddFile(file *t.File) error {
 }
 
 func (s *DB) SearchFile(id int, searchTerm string, exact bool) (*[]*t.File, error) {
-	stmt, err := s.DB.Prepare("SELECT DISTINCT ID, FileName, FileSize, FileType, UserID FROM Files WHERE UserID != ? AND FileName LIKE ?;")
+	stmt, err := s.DB.Prepare("SELECT DISTINCT ID, FileName, FileSize, FileType, UserID FROM Files WHERE UserID != ? AND UserID in (SELECT ID FROM Users where IsActive = 1) AND FileName LIKE ?;")
 	if err != nil {
 		return nil, err
 	}

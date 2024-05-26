@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 
@@ -67,6 +66,7 @@ func main() {
 		MyServerPort:  MyPort,
 	}
 
+	// Register or Login
 Choose:
 	for {
 		fmt.Print("chose option:\n1. Register\n2. Login\n->")
@@ -94,23 +94,34 @@ Choose:
 			}
 		}
 	}
-	go nd.StartPeerServer(MyPort)
 
-	// TODO: Add a notifier to add path
-	// TODO: Add a watch on the path for changes
-
-	nd.localpath = path.Join("/home/jackpairce/Documents/", nd.Name)
-	fmt.Println("Exposing Files from:", nd.localpath)
-	if err := os.Mkdir(nd.localpath, 0755); err != nil {
-		if !os.IsExist(err) {
-			log.Fatalln(err)
+	for {
+		fmt.Print("Enter File Path to Expose: ")
+		path, _ := InputReader(reader)
+		if err := os.Mkdir(path, 0755); err != nil {
+			if !os.IsExist(err) {
+				fmt.Println("No such directory:", path)
+				continue
+			}
 		}
+		nd.localpath = path
+		break
 	}
-
+	// Exposing files
+	fmt.Println("Exposing Files from:", nd.localpath)
 	if err := nd.ExposeFiles(); err != nil {
 		log.Fatalln(err)
+	} else {
+		fmt.Println("Files Exposed")
 	}
 
+	// Watch files
+	go nd.WatchFiles()
+
+	// Start peer server
+	go nd.StartPeerServer(MyPort)
+
+	// Terminal loop
 	for {
 		fmt.Print("Enter Command (/find,/get,/exit)\n> ")
 		Command, err := InputReader(reader)

@@ -38,9 +38,10 @@ message PeerConnexion {
 }
 
 service SuperPeer {
+  rpc Ping(Empty) returns (Empty) {}
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
   rpc Login(RegisterRequest) returns (RegisterResponse) {}
   rpc SearchFiles(SearchFilesRequest) returns (SearchFilesResponse) {}
   rpc GetPeerFiles(FileList) returns (Empty) {}
-    rpc GetPeerConnexion(PeerId) returns (PeerConnexion) {}
+  rpc GetPeerConnexion(PeerId) returns (PeerConnexion) {}
 }

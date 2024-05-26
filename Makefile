@@ -10,11 +10,17 @@ build-server: cmd/server/main.go build-output
 build-client: cmd/client/main.go build-output
 	@cd cmd/client/ && go build -o ../../bin/client
 
-serve: build-server
+run-build-server: build-server
 	@./bin/server
 
-cli: build-client
+run-build-client: build-client
 	@./bin/client
+
+run-server: cmd/server/main.go
+	@go run cmd/server/*
+
+run-client: cmd/client/main.go
+	@go run cmd/client/*
 
 build-win: cmd/server/main.go cmd/server/main.go
 	@cd cmd/server && GOOS=windows GOARCH=amd64 go build -o ../../bin/server.exe

@@ -15,7 +15,7 @@ func (s *Server) UnaryInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
-	if !(info.FullMethod == "/protos.SuperPeer/Register" || info.FullMethod == "/protos.SuperPeer/Login") {
+	if !(info.FullMethod == "/protos.SuperPeer/Register" || info.FullMethod == "/protos.SuperPeer/Login" || info.FullMethod == "/protos.SuperPeer/Ping") {
 		p, _ := peer.FromContext(ctx)
 		s.mu.Lock()
 		defer s.mu.Unlock()

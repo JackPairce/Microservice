@@ -17,7 +17,6 @@ type Peer struct {
 const chunksize = 1024 * 3
 
 func (p *Peer) SendFile(in *types.File, stream Peer_SendFileServer) error {
-	// "/home/jackpairce/Documents/"+in.Name
 	f, err := os.OpenFile(path.Join(p.Path, in.Name), os.O_RDONLY, 0644)
 	if err != nil {
 		if os.IsNotExist(err) {

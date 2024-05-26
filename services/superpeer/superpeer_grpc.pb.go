@@ -20,6 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	SuperPeer_Ping_FullMethodName             = "/protos.SuperPeer/Ping"
 	SuperPeer_Register_FullMethodName         = "/protos.SuperPeer/Register"
 	SuperPeer_Login_FullMethodName            = "/protos.SuperPeer/Login"
 	SuperPeer_SearchFiles_FullMethodName      = "/protos.SuperPeer/SearchFiles"
@@ -31,6 +32,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SuperPeerClient interface {
+	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	SearchFiles(ctx context.Context, in *SearchFilesRequest, opts ...grpc.CallOption) (*SearchFilesResponse, error)
@@ -44,6 +46,15 @@ type superPeerClient struct {
 
 func NewSuperPeerClient(cc grpc.ClientConnInterface) SuperPeerClient {
 	return &superPeerClient{cc}
+}
+
+func (c *superPeerClient) Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, SuperPeer_Ping_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *superPeerClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
@@ -95,6 +106,7 @@ func (c *superPeerClient) GetPeerConnexion(ctx context.Context, in *PeerId, opts
 // All implementations must embed UnimplementedSuperPeerServer
 // for forward compatibility
 type SuperPeerServer interface {
+	Ping(context.Context, *Empty) (*Empty, error)
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	SearchFiles(context.Context, *SearchFilesRequest) (*SearchFilesResponse, error)
@@ -107,6 +119,9 @@ type SuperPeerServer interface {
 type UnimplementedSuperPeerServer struct {
 }
 
+func (UnimplementedSuperPeerServer) Ping(context.Context, *Empty) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
 func (UnimplementedSuperPeerServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
@@ -133,6 +148,24 @@ type UnsafeSuperPeerServer interface {
 
 func RegisterSuperPeerServer(s grpc.ServiceRegistrar, srv SuperPeerServer) {
 	s.RegisterService(&SuperPeer_ServiceDesc, srv)
+}
+
+func _SuperPeer_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperPeerServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperPeer_Ping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperPeerServer).Ping(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SuperPeer_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -232,6 +265,10 @@ var SuperPeer_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "protos.SuperPeer",
 	HandlerType: (*SuperPeerServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Ping",
+			Handler:    _SuperPeer_Ping_Handler,
+		},
 		{
 			MethodName: "Register",
 			Handler:    _SuperPeer_Register_Handler,

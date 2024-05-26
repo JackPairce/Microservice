@@ -19,6 +19,7 @@ import (
 	p "github.com/JackPairce/MicroService/services/peer"
 	s "github.com/JackPairce/MicroService/services/superpeer"
 	t "github.com/JackPairce/MicroService/services/types"
+	"github.com/fsnotify/fsnotify"
 	"github.com/schollz/progressbar/v3"
 	"google.golang.org/grpc"
 )
@@ -255,5 +256,52 @@ func (nd *NodeInfo) StartPeerServer(port string) {
 func (nd *NodeInfo) StopPeerClient() {
 	if nd.grpcServer != nil {
 		nd.grpcServer.Stop()
+	}
+}
+
+func (nd *NodeInfo) WatchFiles() {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Println("Error creating watcher:", err)
+	}
+	defer watcher.Close()
+	err = filepath.Walk(nd.localpath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		if info.IsDir() {
+			return watcher.Add(path)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println("Error adding directory to watcher:", err)
+	}
+
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+			switch {
+			case event.Op&fsnotify.Create == fsnotify.Create:
+				// fmt.Println("New file:", event.Name)
+				nd.ExposeFiles()
+			case event.Op&fsnotify.Write == fsnotify.Write:
+				// fmt.Println("Modified file:", event.Name)
+				nd.ExposeFiles()
+				time.Sleep(5 * time.Second)
+			case event.Op&fsnotify.Remove == fsnotify.Remove:
+				nd.ExposeFiles()
+				// fmt.Println("Deleted file:", event.Name)
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			fmt.Println("Error:", err)
+		}
 	}
 }

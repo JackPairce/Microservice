@@ -5,7 +5,6 @@ go 1.22.1
 require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/joho/godotenv v1.5.1
 	github.com/schollz/progressbar/v3 v3.14.2
 	golang.org/x/crypto v0.22.0
 	google.golang.org/grpc v1.50.1
